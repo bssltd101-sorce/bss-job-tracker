@@ -3,11 +3,17 @@ import Database from "better-sqlite3";
 import { eq, desc, and } from "drizzle-orm";
 import {
   users, jobs, jobUpdates, files, notifications,
+  properties, cleaningContracts, cleaningLogs, cleaningFiles, messages,
   type User, type InsertUser,
   type Job, type InsertJob,
   type JobUpdate, type InsertJobUpdate,
   type JobFile, type InsertFile,
   type Notification, type InsertNotification,
+  type Property, type InsertProperty,
+  type CleaningContract, type InsertCleaningContract,
+  type CleaningLog, type InsertCleaningLog,
+  type CleaningFile, type InsertCleaningFile,
+  type Message, type InsertMessage,
 } from "@shared/schema";
 
 const sqlite = new Database("data.db");
@@ -73,6 +79,65 @@ sqlite.exec(`
     job_id INTEGER,
     message TEXT NOT NULL,
     is_read INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT ''
+  );
+
+  CREATE TABLE IF NOT EXISTS properties (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL,
+    property_type TEXT NOT NULL DEFAULT 'Residential Block',
+    created_at TEXT NOT NULL DEFAULT ''
+  );
+
+  CREATE TABLE IF NOT EXISTS cleaning_contracts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    property_id INTEGER NOT NULL,
+    client_id INTEGER NOT NULL,
+    frequency TEXT NOT NULL DEFAULT 'Weekly',
+    day_of_week TEXT,
+    operative_name TEXT,
+    areas TEXT NOT NULL DEFAULT '[]',
+    notes TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT ''
+  );
+
+  CREATE TABLE IF NOT EXISTS cleaning_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    contract_id INTEGER NOT NULL,
+    property_id INTEGER NOT NULL,
+    operative_name TEXT NOT NULL,
+    scheduled_date TEXT NOT NULL,
+    completed_date TEXT,
+    status TEXT NOT NULL DEFAULT 'Scheduled',
+    areas_completed TEXT NOT NULL DEFAULT '[]',
+    notes TEXT,
+    issue_type TEXT,
+    issue_description TEXT,
+    created_at TEXT NOT NULL DEFAULT ''
+  );
+
+  CREATE TABLE IF NOT EXISTS cleaning_files (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    log_id INTEGER NOT NULL,
+    uploaded_by_id INTEGER NOT NULL,
+    filename TEXT NOT NULL,
+    original_name TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT ''
+  );
+
+  CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thread_type TEXT NOT NULL,
+    thread_id INTEGER NOT NULL,
+    author_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    is_internal INTEGER NOT NULL DEFAULT 0,
+    message_type TEXT NOT NULL DEFAULT 'message',
     created_at TEXT NOT NULL DEFAULT ''
   );
 `);
@@ -214,6 +279,118 @@ function seedIfEmpty() {
     { userId: client2.id, jobId: job3.id, message: "Your job BSS-2024-003 is awaiting specialist plaster delivery (est. 25 April).", isRead: 0, createdAt: "2024-04-22T09:30:00.000Z" },
     { userId: client2.id, jobId: job4.id, message: "Your job BSS-2024-004 has been booked. Works begin 6 May.", isRead: 0, createdAt: "2024-04-22T10:00:00.000Z" },
   ]).run();
+
+  // Demo properties for client1
+  const prop1 = db.insert(properties).values({
+    clientId: client1.id,
+    name: "Maple Court",
+    address: "40-50 Maple Street, Islington, London N1 2AB",
+    propertyType: "Residential Block",
+    createdAt: now(),
+  }).returning().get();
+
+  const prop2 = db.insert(properties).values({
+    clientId: client1.id,
+    name: "Oak View",
+    address: "15-20 Oak Avenue, Hackney, London E8 3PQ",
+    propertyType: "Residential Block",
+    createdAt: now(),
+  }).returning().get();
+
+  // Cleaning contracts
+  const demoAreas = JSON.stringify(["Hallways", "Staircases", "Landings", "Entrance", "Bin Store"]);
+
+  const contract1 = db.insert(cleaningContracts).values({
+    propertyId: prop1.id,
+    clientId: client1.id,
+    frequency: "Weekly",
+    dayOfWeek: "Thursday",
+    operativeName: "Maria Santos",
+    areas: demoAreas,
+    notes: "Keys held at site office.",
+    isActive: 1,
+    createdAt: now(),
+  }).returning().get();
+
+  db.insert(cleaningContracts).values({
+    propertyId: prop2.id,
+    clientId: client1.id,
+    frequency: "Weekly",
+    dayOfWeek: "Thursday",
+    operativeName: "Maria Santos",
+    areas: demoAreas,
+    notes: "Report to concierge on arrival.",
+    isActive: 1,
+    createdAt: now(),
+  }).run();
+
+  // Helper: get date string for N days ago or ahead
+  function daysAgo(n: number) {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  }
+  function daysAhead(n: number) {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Cleaning logs for contract 1
+  db.insert(cleaningLogs).values([
+    {
+      contractId: contract1.id,
+      propertyId: prop1.id,
+      operativeName: "Maria Santos",
+      scheduledDate: daysAgo(14),
+      completedDate: daysAgo(14),
+      status: "Completed",
+      areasCompleted: demoAreas,
+      notes: "All areas cleaned to standard.",
+      issueType: null,
+      issueDescription: null,
+      createdAt: now(),
+    },
+    {
+      contractId: contract1.id,
+      propertyId: prop1.id,
+      operativeName: "Maria Santos",
+      scheduledDate: daysAgo(7),
+      completedDate: daysAgo(7),
+      status: "Completed",
+      areasCompleted: demoAreas,
+      notes: "All areas cleaned to standard. Bin store cleared of extra waste.",
+      issueType: null,
+      issueDescription: null,
+      createdAt: now(),
+    },
+    {
+      contractId: contract1.id,
+      propertyId: prop1.id,
+      operativeName: "Maria Santos",
+      scheduledDate: daysAhead(3),
+      completedDate: null,
+      status: "Scheduled",
+      areasCompleted: "[]",
+      notes: null,
+      issueType: null,
+      issueDescription: null,
+      createdAt: now(),
+    },
+    {
+      contractId: contract1.id,
+      propertyId: prop1.id,
+      operativeName: "Maria Santos",
+      scheduledDate: daysAgo(7),
+      completedDate: null,
+      status: "Issue Reported",
+      areasCompleted: demoAreas,
+      notes: "Cleaning completed but issue noted on 2nd floor landing.",
+      issueType: "Lighting Fault",
+      issueDescription: "Bulb out on 2nd floor landing. Requires replacement.",
+      createdAt: now(),
+    },
+  ]).run();
 }
 
 seedIfEmpty();
@@ -251,6 +428,36 @@ export interface IStorage {
   markAllNotificationsRead(userId: number): void;
   createNotification(data: InsertNotification): Notification;
   getUnreadCount(userId: number): number;
+
+  // Properties
+  getPropertiesByClientId(clientId: number): Property[];
+  getAllProperties(): Property[];
+  getPropertyById(id: number): Property | undefined;
+  createProperty(data: InsertProperty): Property;
+
+  // Cleaning Contracts
+  getCleaningContractsByPropertyId(propertyId: number): CleaningContract[];
+  getCleaningContractsByClientId(clientId: number): CleaningContract[];
+  getAllCleaningContracts(): CleaningContract[];
+  getCleaningContractById(id: number): CleaningContract | undefined;
+  createCleaningContract(data: InsertCleaningContract): CleaningContract;
+  updateCleaningContract(id: number, data: Partial<InsertCleaningContract>): CleaningContract | undefined;
+
+  // Cleaning Logs
+  getCleaningLogsByContractId(contractId: number): CleaningLog[];
+  getCleaningLogsByPropertyId(propertyId: number): CleaningLog[];
+  getAllCleaningLogs(): CleaningLog[];
+  getCleaningLogById(id: number): CleaningLog | undefined;
+  createCleaningLog(data: InsertCleaningLog): CleaningLog;
+  updateCleaningLog(id: number, data: Partial<InsertCleaningLog>): CleaningLog | undefined;
+
+  // Cleaning Files
+  getCleaningFiles(logId: number): CleaningFile[];
+  createCleaningFile(data: InsertCleaningFile): CleaningFile;
+
+  // Messages
+  getMessages(threadType: string, threadId: number, includeInternal: boolean): Message[];
+  createMessage(data: InsertMessage): Message;
 }
 
 export const storage: IStorage = {
@@ -330,5 +537,80 @@ export const storage: IStorage = {
   getUnreadCount(userId) {
     const rows = db.select().from(notifications).where(and(eq(notifications.userId, userId), eq(notifications.isRead, 0))).all();
     return rows.length;
+  },
+
+  // Properties
+  getPropertiesByClientId(clientId) {
+    return db.select().from(properties).where(eq(properties.clientId, clientId)).orderBy(desc(properties.createdAt)).all();
+  },
+  getAllProperties() {
+    return db.select().from(properties).orderBy(desc(properties.createdAt)).all();
+  },
+  getPropertyById(id) {
+    return db.select().from(properties).where(eq(properties.id, id)).get();
+  },
+  createProperty(data) {
+    return db.insert(properties).values({ ...data, createdAt: now() }).returning().get();
+  },
+
+  // Cleaning Contracts
+  getCleaningContractsByPropertyId(propertyId) {
+    return db.select().from(cleaningContracts).where(eq(cleaningContracts.propertyId, propertyId)).all();
+  },
+  getCleaningContractsByClientId(clientId) {
+    return db.select().from(cleaningContracts).where(eq(cleaningContracts.clientId, clientId)).all();
+  },
+  getAllCleaningContracts() {
+    return db.select().from(cleaningContracts).orderBy(desc(cleaningContracts.createdAt)).all();
+  },
+  getCleaningContractById(id) {
+    return db.select().from(cleaningContracts).where(eq(cleaningContracts.id, id)).get();
+  },
+  createCleaningContract(data) {
+    return db.insert(cleaningContracts).values({ ...data, createdAt: now() }).returning().get();
+  },
+  updateCleaningContract(id, data) {
+    return db.update(cleaningContracts).set(data).where(eq(cleaningContracts.id, id)).returning().get();
+  },
+
+  // Cleaning Logs
+  getCleaningLogsByContractId(contractId) {
+    return db.select().from(cleaningLogs).where(eq(cleaningLogs.contractId, contractId)).orderBy(desc(cleaningLogs.scheduledDate)).all();
+  },
+  getCleaningLogsByPropertyId(propertyId) {
+    return db.select().from(cleaningLogs).where(eq(cleaningLogs.propertyId, propertyId)).orderBy(desc(cleaningLogs.scheduledDate)).all();
+  },
+  getAllCleaningLogs() {
+    return db.select().from(cleaningLogs).orderBy(desc(cleaningLogs.scheduledDate)).all();
+  },
+  getCleaningLogById(id) {
+    return db.select().from(cleaningLogs).where(eq(cleaningLogs.id, id)).get();
+  },
+  createCleaningLog(data) {
+    return db.insert(cleaningLogs).values({ ...data, createdAt: now() }).returning().get();
+  },
+  updateCleaningLog(id, data) {
+    return db.update(cleaningLogs).set(data).where(eq(cleaningLogs.id, id)).returning().get();
+  },
+
+  // Cleaning Files
+  getCleaningFiles(logId) {
+    return db.select().from(cleaningFiles).where(eq(cleaningFiles.logId, logId)).orderBy(desc(cleaningFiles.createdAt)).all();
+  },
+  createCleaningFile(data) {
+    return db.insert(cleaningFiles).values({ ...data, createdAt: now() }).returning().get();
+  },
+
+  // Messages
+  getMessages(threadType, threadId, includeInternal) {
+    const q = db.select().from(messages).where(
+      includeInternal
+        ? and(eq(messages.threadType, threadType), eq(messages.threadId, threadId))
+        : and(eq(messages.threadType, threadType), eq(messages.threadId, threadId), eq(messages.isInternal, 0))
+    ).orderBy(messages.createdAt);
+    return q.all();
+  },
+  createMessage(data) {
+    return db.insert(messages).values({ ...data, createdAt: now() }).returning().get();
   },
 };

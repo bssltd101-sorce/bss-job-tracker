@@ -285,4 +285,285 @@ export function registerRoutes(httpServer: Server, app: Express) {
     };
     res.json(stats);
   });
+
+  // ─── Properties ───────────────────────────────────────────────────────────
+  app.get("/api/properties", requireAuth, (req, res) => {
+    if (req.session.userRole === "admin") {
+      return res.json(storage.getAllProperties());
+    }
+    return res.json(storage.getPropertiesByClientId(req.session.userId!));
+  });
+
+  app.post("/api/properties", requireAdmin, (req, res) => {
+    const { clientId, name, address, propertyType } = req.body;
+    if (!clientId || !name || !address) return res.status(400).json({ error: "clientId, name and address required" });
+    const prop = storage.createProperty({ clientId: Number(clientId), name, address, propertyType: propertyType || "Residential Block", createdAt: "" });
+    res.json(prop);
+  });
+
+  app.get("/api/properties/:id", requireAuth, (req, res) => {
+    const prop = storage.getPropertyById(Number(req.params.id));
+    if (!prop) return res.status(404).json({ error: "Not found" });
+    if (req.session.userRole !== "admin" && prop.clientId !== req.session.userId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    res.json(prop);
+  });
+
+  // ─── Cleaning Contracts ───────────────────────────────────────────────────
+  app.get("/api/cleaning/contracts", requireAuth, (req, res) => {
+    if (req.session.userRole === "admin") {
+      const contracts = storage.getAllCleaningContracts();
+      const enriched = contracts.map((c) => {
+        const prop = storage.getPropertyById(c.propertyId);
+        const client = storage.getUserById(c.clientId);
+        return { ...c, propertyName: prop?.name ?? "", propertyAddress: prop?.address ?? "", clientName: client?.name ?? "" };
+      });
+      return res.json(enriched);
+    }
+    const contracts = storage.getCleaningContractsByClientId(req.session.userId!);
+    const enriched = contracts.map((c) => {
+      const prop = storage.getPropertyById(c.propertyId);
+      return { ...c, propertyName: prop?.name ?? "", propertyAddress: prop?.address ?? "" };
+    });
+    return res.json(enriched);
+  });
+
+  app.get("/api/cleaning/contracts/:id", requireAuth, (req, res) => {
+    const contract = storage.getCleaningContractById(Number(req.params.id));
+    if (!contract) return res.status(404).json({ error: "Not found" });
+    if (req.session.userRole !== "admin" && contract.clientId !== req.session.userId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const prop = storage.getPropertyById(contract.propertyId);
+    res.json({ ...contract, propertyName: prop?.name ?? "", propertyAddress: prop?.address ?? "" });
+  });
+
+  app.post("/api/cleaning/contracts", requireAdmin, (req, res) => {
+    const { propertyId, clientId, frequency, dayOfWeek, operativeName, areas, notes } = req.body;
+    if (!propertyId || !clientId) return res.status(400).json({ error: "propertyId and clientId required" });
+    const contract = storage.createCleaningContract({
+      propertyId: Number(propertyId),
+      clientId: Number(clientId),
+      frequency: frequency || "Weekly",
+      dayOfWeek: dayOfWeek || null,
+      operativeName: operativeName || null,
+      areas: Array.isArray(areas) ? JSON.stringify(areas) : (areas || "[]"),
+      notes: notes || null,
+      isActive: 1,
+      createdAt: "",
+    });
+    res.json(contract);
+  });
+
+  app.patch("/api/cleaning/contracts/:id", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const existing = storage.getCleaningContractById(id);
+    if (!existing) return res.status(404).json({ error: "Not found" });
+    const updated = storage.updateCleaningContract(id, req.body);
+    res.json(updated);
+  });
+
+  // ─── Cleaning Logs ────────────────────────────────────────────────────────
+  app.get("/api/cleaning/logs", requireAuth, (req, res) => {
+    if (req.session.userRole === "admin") {
+      const logs = storage.getAllCleaningLogs();
+      const enriched = logs.map((l) => {
+        const prop = storage.getPropertyById(l.propertyId);
+        return { ...l, propertyName: prop?.name ?? "", propertyAddress: prop?.address ?? "" };
+      });
+      return res.json(enriched);
+    }
+    // Client: get logs for their properties
+    const myProps = storage.getPropertiesByClientId(req.session.userId!);
+    const logs: ReturnType<typeof storage.getCleaningLogsByPropertyId> = [];
+    for (const p of myProps) {
+      logs.push(...storage.getCleaningLogsByPropertyId(p.id));
+    }
+    logs.sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate));
+    const enriched = logs.map((l) => {
+      const prop = storage.getPropertyById(l.propertyId);
+      return { ...l, propertyName: prop?.name ?? "", propertyAddress: prop?.address ?? "" };
+    });
+    return res.json(enriched);
+  });
+
+  app.get("/api/cleaning/logs/:id", requireAuth, (req, res) => {
+    const log = storage.getCleaningLogById(Number(req.params.id));
+    if (!log) return res.status(404).json({ error: "Not found" });
+    const prop = storage.getPropertyById(log.propertyId);
+    if (req.session.userRole !== "admin" && prop?.clientId !== req.session.userId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    res.json({ ...log, propertyName: prop?.name ?? "", propertyAddress: prop?.address ?? "", clientId: prop?.clientId });
+  });
+
+  app.post("/api/cleaning/logs", requireAdmin, (req, res) => {
+    const { contractId, propertyId, operativeName, scheduledDate, completedDate, status, areasCompleted, notes, issueType, issueDescription } = req.body;
+    if (!contractId || !propertyId || !operativeName || !scheduledDate) {
+      return res.status(400).json({ error: "contractId, propertyId, operativeName and scheduledDate required" });
+    }
+    const log = storage.createCleaningLog({
+      contractId: Number(contractId),
+      propertyId: Number(propertyId),
+      operativeName,
+      scheduledDate,
+      completedDate: completedDate || null,
+      status: status || "Scheduled",
+      areasCompleted: Array.isArray(areasCompleted) ? JSON.stringify(areasCompleted) : (areasCompleted || "[]"),
+      notes: notes || null,
+      issueType: issueType || null,
+      issueDescription: issueDescription || null,
+      createdAt: "",
+    });
+    res.json(log);
+  });
+
+  app.patch("/api/cleaning/logs/:id", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const existing = storage.getCleaningLogById(id);
+    if (!existing) return res.status(404).json({ error: "Not found" });
+    const payload = { ...req.body };
+    if (Array.isArray(payload.areasCompleted)) {
+      payload.areasCompleted = JSON.stringify(payload.areasCompleted);
+    }
+    const updated = storage.updateCleaningLog(id, payload);
+    res.json(updated);
+  });
+
+  app.post("/api/cleaning/logs/:id/files", requireAdmin, upload.array("files", 10), (req, res) => {
+    const logId = Number(req.params.id);
+    const log = storage.getCleaningLogById(logId);
+    if (!log) return res.status(404).json({ error: "Not found" });
+    const uploadedFiles = req.files as Express.Multer.File[];
+    if (!uploadedFiles || uploadedFiles.length === 0) return res.status(400).json({ error: "No files uploaded" });
+    const saved = uploadedFiles.map((f) =>
+      storage.createCleaningFile({
+        logId,
+        uploadedById: req.session.userId!,
+        filename: f.filename,
+        originalName: f.originalname,
+        mimeType: f.mimetype,
+        size: f.size,
+        createdAt: "",
+      })
+    );
+    res.json(saved);
+  });
+
+  app.get("/api/cleaning/logs/:id/files", requireAuth, (req, res) => {
+    const logId = Number(req.params.id);
+    const log = storage.getCleaningLogById(logId);
+    if (!log) return res.status(404).json({ error: "Not found" });
+    const prop = storage.getPropertyById(log.propertyId);
+    if (req.session.userRole !== "admin" && prop?.clientId !== req.session.userId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    res.json(storage.getCleaningFiles(logId));
+  });
+
+  // ─── Messages ─────────────────────────────────────────────────────────────
+  app.get("/api/messages/:threadType/:threadId", requireAuth, (req, res) => {
+    const { threadType, threadId } = req.params;
+    const isAdmin = req.session.userRole === "admin";
+    // Verify access
+    if (threadType === "job") {
+      const job = storage.getJobById(Number(threadId));
+      if (!job) return res.status(404).json({ error: "Not found" });
+      if (!isAdmin && job.clientId !== req.session.userId) return res.status(403).json({ error: "Forbidden" });
+    } else if (threadType === "cleaning") {
+      const log = storage.getCleaningLogById(Number(threadId));
+      if (!log) return res.status(404).json({ error: "Not found" });
+      const prop = storage.getPropertyById(log.propertyId);
+      if (!isAdmin && prop?.clientId !== req.session.userId) return res.status(403).json({ error: "Forbidden" });
+    }
+    const msgs = storage.getMessages(threadType, Number(threadId), isAdmin);
+    const enriched = msgs.map((m) => {
+      const author = storage.getUserById(m.authorId);
+      return { ...m, authorName: author?.name ?? "Unknown", authorRole: author?.role ?? "client" };
+    });
+    res.json(enriched);
+  });
+
+  app.post("/api/messages/:threadType/:threadId", requireAuth, (req, res) => {
+    const { threadType, threadId } = req.params;
+    const isAdmin = req.session.userRole === "admin";
+    const threadIdNum = Number(threadId);
+    let clientId: number | null = null;
+
+    if (threadType === "job") {
+      const job = storage.getJobById(threadIdNum);
+      if (!job) return res.status(404).json({ error: "Not found" });
+      if (!isAdmin && job.clientId !== req.session.userId) return res.status(403).json({ error: "Forbidden" });
+      clientId = job.clientId;
+    } else if (threadType === "cleaning") {
+      const log = storage.getCleaningLogById(threadIdNum);
+      if (!log) return res.status(404).json({ error: "Not found" });
+      const prop = storage.getPropertyById(log.propertyId);
+      if (!isAdmin && prop?.clientId !== req.session.userId) return res.status(403).json({ error: "Forbidden" });
+      clientId = prop?.clientId ?? null;
+    }
+
+    const isInternal = isAdmin && req.body.isInternal ? 1 : 0;
+    const messageType = req.body.messageType || "message";
+
+    const msg = storage.createMessage({
+      threadType,
+      threadId: threadIdNum,
+      authorId: req.session.userId!,
+      message: req.body.message,
+      isInternal,
+      messageType,
+      createdAt: "",
+    });
+
+    // Notifications
+    if (!isAdmin && clientId) {
+      // Client messaging admin — notify admin (userId=1)
+      storage.createNotification({
+        userId: 1,
+        jobId: threadType === "job" ? threadIdNum : undefined,
+        message: `Client message on ${threadType} #${threadId}: "${req.body.message.substring(0, 80)}"`,
+        isRead: 0,
+        createdAt: "",
+      });
+    } else if (isAdmin && !isInternal && clientId) {
+      // Admin messaging client — notify client
+      storage.createNotification({
+        userId: clientId,
+        jobId: threadType === "job" ? threadIdNum : undefined,
+        message: `New message on your ${threadType}: "${req.body.message.substring(0, 80)}"`,
+        isRead: 0,
+        createdAt: "",
+      });
+    }
+
+    const author = storage.getUserById(req.session.userId!);
+    res.json({ ...msg, authorName: author?.name ?? "Unknown", authorRole: author?.role ?? "client" });
+  });
+
+  // ─── GDPR Export ──────────────────────────────────────────────────────────
+  app.get("/api/export/clients", requireAdmin, (_req, res) => {
+    const clients = storage.getAllClients();
+    const allJobs = storage.getAllJobs();
+    const allProps = storage.getAllProperties();
+
+    const header = "Name,Email,Phone,Company,Properties,Jobs Count,Created At\n";
+    const rows = clients.map((c) => {
+      const jobs = allJobs.filter((j) => j.clientId === c.id);
+      const props = allProps.filter((p) => p.clientId === c.id);
+      const propAddresses = props.map((p) => p.address).join(" | ");
+      const name = `"${c.name.replace(/"/g, '""')}"`;
+      const email = `"${c.email.replace(/"/g, '""')}"`;
+      const phone = `"${(c.phone ?? "").replace(/"/g, '""')}"`;
+      const company = `"${(c.company ?? "").replace(/"/g, '""')}"`;
+      const propsCell = `"${propAddresses.replace(/"/g, '""')}"`;
+      const createdAt = c.createdAt ? c.createdAt.slice(0, 10) : "";
+      return `${name},${email},${phone},${company},${propsCell},${jobs.length},${createdAt}`;
+    });
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", 'attachment; filename="bss-clients-export.csv"');
+    res.send(header + rows.join("\n"));
+  });
 }

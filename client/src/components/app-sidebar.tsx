@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { useLocation } from "wouter";
 import {
-  LayoutDashboard, Briefcase, Users, Bell, LogOut,
+  LayoutDashboard, Briefcase, Users, Bell, LogOut, Sparkles,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
@@ -17,12 +17,14 @@ import bssLogo from "@assets/bss-logo.jpeg";
 const adminNav = [
   { href: "/",             label: "Dashboard",     icon: LayoutDashboard },
   { href: "/jobs",         label: "All Jobs",       icon: Briefcase       },
+  { href: "/cleaning",     label: "Cleaning",       icon: Sparkles        },
   { href: "/clients",      label: "Clients",        icon: Users           },
   { href: "/notifications",label: "Notifications",  icon: Bell            },
 ];
 
 const clientNav = [
   { href: "/",             label: "My Jobs",        icon: LayoutDashboard },
+  { href: "/cleaning",     label: "Cleaning",       icon: Sparkles        },
   { href: "/notifications",label: "Notifications",  icon: Bell            },
 ];
 

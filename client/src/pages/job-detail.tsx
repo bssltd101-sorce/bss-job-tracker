@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { StatusBadge } from "@/components/status-badge";
 import { JobProgress } from "@/components/job-progress";
+import { MessageThread } from "@/components/message-thread";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -447,6 +448,22 @@ export default function JobDetailPage() {
                 </Button>
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Message Thread */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-1.5">
+              <Send className="w-4 h-4" /> Messages
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MessageThread
+              threadType="job"
+              threadId={job.id}
+              clientId={job.clientId}
+            />
           </CardContent>
         </Card>
       </div>

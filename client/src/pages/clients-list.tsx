@@ -9,17 +9,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Search, Plus, User, Mail, Phone, Building2, ArrowRight } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { Search, Plus, User, Mail, Phone, Building2, ArrowRight, Download } from "lucide-react";
 
 type Client = { id: number; name: string; email: string; company?: string; phone?: string; createdAt: string };
 
 export default function ClientsListPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const qc = useQueryClient();
   const { data: clients, isLoading } = useQuery<Client[]>({ queryKey: ["/api/users"] });
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", company: "", phone: "" });
+
+  function handleExportCSV() {
+    const a = document.createElement("a");
+    a.href = "/api/export/clients";
+    a.download = "bss-clients-export.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 
   const filtered = (clients ?? []).filter((c) => {
     const q = search.toLowerCase();
@@ -48,6 +60,12 @@ export default function ClientsListPage() {
             <h1 className="text-xl font-bold">Clients</h1>
             <p className="text-sm text-muted-foreground mt-0.5">{clients?.length ?? 0} registered clients</p>
           </div>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={handleExportCSV} data-testid="button-export-clients">
+                <Download className="w-4 h-4" /> Export CSV
+              </Button>
+            )}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="gap-1.5" data-testid="button-add-client">
@@ -88,6 +106,7 @@ export default function ClientsListPage() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <div className="relative">

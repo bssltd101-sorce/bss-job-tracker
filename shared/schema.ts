@@ -87,3 +87,82 @@ export const notifications = sqliteTable("notifications", {
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
+
+// ─── Properties ──────────────────────────────────────────────────────────────
+export const properties = sqliteTable("properties", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  clientId: integer("client_id").notNull(),
+  name: text("name").notNull(), // e.g. "Maple Court"
+  address: text("address").notNull(),
+  propertyType: text("property_type").notNull().default("Residential Block"), // Residential Block | Commercial | House | Flat
+  createdAt: text("created_at").notNull().default(""),
+});
+export const insertPropertySchema = createInsertSchema(properties).omit({ id: true, createdAt: true });
+export type InsertProperty = z.infer<typeof insertPropertySchema>;
+export type Property = typeof properties.$inferSelect;
+
+// ─── Cleaning Contracts ───────────────────────────────────────────────────────
+export const cleaningContracts = sqliteTable("cleaning_contracts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  propertyId: integer("property_id").notNull(),
+  clientId: integer("client_id").notNull(),
+  frequency: text("frequency").notNull().default("Weekly"), // Weekly | Fortnightly | Monthly
+  dayOfWeek: text("day_of_week"), // e.g. "Thursday"
+  operativeName: text("operative_name"),
+  areas: text("areas").notNull().default("[]"), // JSON array
+  notes: text("notes"),
+  isActive: integer("is_active").notNull().default(1),
+  createdAt: text("created_at").notNull().default(""),
+});
+export const insertCleaningContractSchema = createInsertSchema(cleaningContracts).omit({ id: true, createdAt: true });
+export type InsertCleaningContract = z.infer<typeof insertCleaningContractSchema>;
+export type CleaningContract = typeof cleaningContracts.$inferSelect;
+
+// ─── Cleaning Logs ────────────────────────────────────────────────────────────
+export const cleaningLogs = sqliteTable("cleaning_logs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  contractId: integer("contract_id").notNull(),
+  propertyId: integer("property_id").notNull(),
+  operativeName: text("operative_name").notNull(),
+  scheduledDate: text("scheduled_date").notNull(),
+  completedDate: text("completed_date"),
+  status: text("status").notNull().default("Scheduled"), // Scheduled | Completed | Missed | Rebooked | Issue Reported
+  areasCompleted: text("areas_completed").notNull().default("[]"), // JSON array
+  notes: text("notes"),
+  issueType: text("issue_type"), // Damage | Leak | Lighting Fault | Fly-tipping | Health & Safety | Other
+  issueDescription: text("issue_description"),
+  createdAt: text("created_at").notNull().default(""),
+});
+export const insertCleaningLogSchema = createInsertSchema(cleaningLogs).omit({ id: true, createdAt: true });
+export type InsertCleaningLog = z.infer<typeof insertCleaningLogSchema>;
+export type CleaningLog = typeof cleaningLogs.$inferSelect;
+
+// ─── Cleaning Log Files ───────────────────────────────────────────────────────
+export const cleaningFiles = sqliteTable("cleaning_files", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  logId: integer("log_id").notNull(),
+  uploadedById: integer("uploaded_by_id").notNull(),
+  filename: text("filename").notNull(),
+  originalName: text("original_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  createdAt: text("created_at").notNull().default(""),
+});
+export const insertCleaningFileSchema = createInsertSchema(cleaningFiles).omit({ id: true, createdAt: true });
+export type InsertCleaningFile = z.infer<typeof insertCleaningFileSchema>;
+export type CleaningFile = typeof cleaningFiles.$inferSelect;
+
+// ─── Messages ─────────────────────────────────────────────────────────────────
+export const messages = sqliteTable("messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  threadType: text("thread_type").notNull(), // "job" | "cleaning"
+  threadId: integer("thread_id").notNull(), // jobId or cleaningLogId
+  authorId: integer("author_id").notNull(),
+  message: text("message").notNull(),
+  isInternal: integer("is_internal").notNull().default(0),
+  messageType: text("message_type").notNull().default("message"), // message | question | issue | additional_works | update_request
+  createdAt: text("created_at").notNull().default(""),
+});
+export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true });
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;

@@ -15,6 +15,10 @@ import NewJobPage from "@/pages/new-job";
 import ClientsListPage from "@/pages/clients-list";
 import NotificationsPage from "@/pages/notifications";
 import NotFoundPage from "@/pages/not-found";
+import CleaningPage from "@/pages/cleaning";
+import CleaningDetailPage from "@/pages/cleaning-detail";
+import NewCleaningContractPage from "@/pages/new-cleaning-contract";
+import NewCleaningLogPage from "@/pages/new-cleaning-log";
 import { Bell, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -131,13 +135,17 @@ function AppShell() {
           <main className="flex-1 overflow-hidden">
             <Router hook={useHashLocation}>
               <Switch>
-                <Route path="/"              component={DashboardPage}   />
-                <Route path="/jobs/new"      component={NewJobPage}      />
-                <Route path="/jobs/:id"      component={JobDetailPage}   />
-                <Route path="/jobs"          component={JobsListPage}    />
-                <Route path="/clients"       component={ClientsListPage} />
-                <Route path="/notifications" component={NotificationsPage} />
-                <Route                       component={NotFoundPage}    />
+                <Route path="/"                        component={DashboardPage}            />
+                <Route path="/jobs/new"                component={NewJobPage}               />
+                <Route path="/jobs/:id"                component={JobDetailPage}            />
+                <Route path="/jobs"                    component={JobsListPage}             />
+                <Route path="/cleaning/new-contract"   component={NewCleaningContractPage}  />
+                <Route path="/cleaning/new-log"        component={NewCleaningLogPage}       />
+                <Route path="/cleaning/:id"            component={CleaningDetailPage}       />
+                <Route path="/cleaning"                component={CleaningPage}             />
+                <Route path="/clients"                 component={ClientsListPage}          />
+                <Route path="/notifications"           component={NotificationsPage}        />
+                <Route                                 component={NotFoundPage}             />
               </Switch>
             </Router>
           </main>
