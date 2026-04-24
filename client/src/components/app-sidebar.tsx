@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { useLocation } from "wouter";
 import {
-  LayoutDashboard, Briefcase, Users, Bell, LogOut, Sparkles,
+  LayoutDashboard, Briefcase, Users, Bell, LogOut, Sparkles, UserCheck,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
@@ -19,6 +19,7 @@ const adminNav = [
   { href: "/jobs",         label: "All Jobs",       icon: Briefcase       },
   { href: "/cleaning",     label: "Cleaning",       icon: Sparkles        },
   { href: "/clients",      label: "Clients",        icon: Users           },
+  { href: "/cleaners",     label: "Cleaners",       icon: UserCheck       },
   { href: "/notifications",label: "Notifications",  icon: Bell            },
 ];
 

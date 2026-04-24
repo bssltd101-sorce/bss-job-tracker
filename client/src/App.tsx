@@ -8,6 +8,11 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import LoginPage from "@/pages/login";
+import ClientSetupPage from "@/pages/client-setup";
+import CleanerSetupPage from "@/pages/cleaner-setup";
+import CleanerDashboardPage from "@/pages/cleaner-dashboard";
+import CleanerLogPage from "@/pages/cleaner-log";
+import CleanersListPage from "@/pages/cleaners-list";
 import DashboardPage from "@/pages/dashboard";
 import JobsListPage from "@/pages/jobs-list";
 import JobDetailPage from "@/pages/job-detail";
@@ -24,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
+import bssLogo from "@assets/bss-logo.jpeg";
 
 function ThemeToggle() {
   const [dark, setDark] = useState(() =>
@@ -69,7 +75,7 @@ function NotifBell() {
 }
 
 function AppShell() {
-  const { user, loading } = useAuth();
+  const { user, loading, needsSetup, logout } = useAuth();
 
   useEffect(() => {
     const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -97,6 +103,38 @@ function AppShell() {
   }
 
   if (!user) return <LoginPage />;
+  if (needsSetup && user?.role === "cleaner") return <CleanerSetupPage />;
+  if (needsSetup && user?.role === "client") return <ClientSetupPage />;
+
+  // Cleaner portal — mobile-first shell, no sidebar
+  if (user?.role === "cleaner") {
+    return (
+      <div className="min-h-dvh bg-background">
+        <header className="bg-[#0A0A0A] px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+          <div className="flex items-center gap-2">
+            <img src={bssLogo} alt="BSS" className="h-8 w-auto" />
+            <span className="text-[#E8A020] font-semibold text-sm">Cleaning Portal</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-white/60 text-xs">{user.name}</span>
+            <button
+              onClick={logout}
+              className="text-white/40 hover:text-white text-xs underline"
+            >
+              Sign out
+            </button>
+          </div>
+        </header>
+        <Router hook={useHashLocation}>
+          <Switch>
+            <Route path="/" component={CleanerDashboardPage} />
+            <Route path="/cleaner/log/:contractId" component={CleanerLogPage} />
+            <Route component={CleanerDashboardPage} />
+          </Switch>
+        </Router>
+      </div>
+    );
+  }
 
   const sidebarStyle = {
     "--sidebar-width": "14rem",
@@ -144,6 +182,7 @@ function AppShell() {
                 <Route path="/cleaning/:id"            component={CleaningDetailPage}       />
                 <Route path="/cleaning"                component={CleaningPage}             />
                 <Route path="/clients"                 component={ClientsListPage}          />
+                <Route path="/cleaners"                component={CleanersListPage}         />
                 <Route path="/notifications"           component={NotificationsPage}        />
                 <Route                                 component={NotFoundPage}             />
               </Switch>

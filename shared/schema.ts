@@ -11,6 +11,7 @@ export const users = sqliteTable("users", {
   role: text("role").notNull().default("client"), // "admin" | "client"
   company: text("company"),
   phone: text("phone"),
+  hasCompletedSetup: integer("has_completed_setup").notNull().default(0),
   createdAt: text("created_at").notNull().default(""),
 });
 
@@ -151,6 +152,17 @@ export const cleaningFiles = sqliteTable("cleaning_files", {
 export const insertCleaningFileSchema = createInsertSchema(cleaningFiles).omit({ id: true, createdAt: true });
 export type InsertCleaningFile = z.infer<typeof insertCleaningFileSchema>;
 export type CleaningFile = typeof cleaningFiles.$inferSelect;
+
+// ─── Cleaner Assignments ──────────────────────────────────────────────────────
+export const cleanerAssignments = sqliteTable("cleaner_assignments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  cleanerId: integer("cleaner_id").notNull(), // user with role="cleaner"
+  contractId: integer("contract_id").notNull(), // cleaning_contracts.id
+  createdAt: text("created_at").notNull().default(""),
+});
+export const insertCleanerAssignmentSchema = createInsertSchema(cleanerAssignments).omit({ id: true, createdAt: true });
+export type InsertCleanerAssignment = z.infer<typeof insertCleanerAssignmentSchema>;
+export type CleanerAssignment = typeof cleanerAssignments.$inferSelect;
 
 // ─── Messages ─────────────────────────────────────────────────────────────────
 export const messages = sqliteTable("messages", {

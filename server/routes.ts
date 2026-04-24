@@ -75,6 +75,24 @@ export function registerRoutes(httpServer: Server, app: Express) {
     res.json(safeUser);
   });
 
+  // Client first-time setup — set password + mark consent given
+  app.post("/api/auth/complete-setup", requireAuth, (req, res) => {
+    const { newPassword, agreedToTerms, agreedToGdpr } = req.body;
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    }
+    if (!agreedToTerms || !agreedToGdpr) {
+      return res.status(400).json({ error: "You must agree to the Terms and GDPR policy" });
+    }
+    const updated = storage.updateUser(req.session.userId!, {
+      password: newPassword,
+      hasCompletedSetup: 1,
+    } as any);
+    if (!updated) return res.status(404).json({ error: "User not found" });
+    const { password: _pw, ...safe } = updated;
+    res.json({ user: safe });
+  });
+
   // ─── Users (admin) ────────────────────────────────────────────────────────
   app.get("/api/users", requireAdmin, (_req, res) => {
     const clients = storage.getAllClients();
@@ -431,7 +449,7 @@ export function registerRoutes(httpServer: Server, app: Express) {
     res.json(updated);
   });
 
-  app.post("/api/cleaning/logs/:id/files", requireAdmin, upload.array("files", 10), (req, res) => {
+  app.post("/api/cleaning/logs/:id/files", requireAuth, upload.array("files", 20), (req, res) => {
     const logId = Number(req.params.id);
     const log = storage.getCleaningLogById(logId);
     if (!log) return res.status(404).json({ error: "Not found" });
@@ -540,6 +558,64 @@ export function registerRoutes(httpServer: Server, app: Express) {
 
     const author = storage.getUserById(req.session.userId!);
     res.json({ ...msg, authorName: author?.name ?? "Unknown", authorRole: author?.role ?? "client" });
+  });
+
+  // ─── Cleaners (admin) ──────────────────────────────────────────────────────────────
+  // Get all cleaners
+  app.get("/api/cleaners", requireAdmin, (_req, res) => {
+    const cleaners = storage.getAllCleaners();
+    res.json(cleaners.map(({ password: _pw, ...u }) => u));
+  });
+
+  // Create cleaner account
+  app.post("/api/cleaners", requireAdmin, (req, res) => {
+    const { email, name, phone } = req.body;
+    if (!email || !name) return res.status(400).json({ error: "email and name required" });
+    const existing = storage.getUserByEmail(email.toLowerCase().trim());
+    if (existing) return res.status(409).json({ error: "Email already in use" });
+    const user = storage.createUser({
+      email: email.toLowerCase().trim(),
+      password: "changeme123",
+      name,
+      role: "cleaner",
+      company: "BSS Ltd",
+      phone: phone || "",
+      hasCompletedSetup: 0,
+    });
+    const { password: _pw, ...safe } = user;
+    res.json(safe);
+  });
+
+  // Assign cleaner to contract
+  app.post("/api/cleaners/:id/assignments", requireAdmin, (req, res) => {
+    const cleanerId = Number(req.params.id);
+    const { contractId } = req.body;
+    if (!contractId) return res.status(400).json({ error: "contractId required" });
+    const assignment = storage.createCleanerAssignment({ cleanerId, contractId, createdAt: "" });
+    res.json(assignment);
+  });
+
+  // Get assignments for a cleaner
+  app.get("/api/cleaners/:id/assignments", requireAdmin, (req, res) => {
+    const assignments = storage.getCleanerAssignments(Number(req.params.id));
+    res.json(assignments);
+  });
+
+  // Remove assignment
+  app.delete("/api/cleaners/assignments/:id", requireAdmin, (req, res) => {
+    storage.deleteCleanerAssignment(Number(req.params.id));
+    res.json({ ok: true });
+  });
+
+  // ─── Cleaner's own data ────────────────────────────────────────────────────────────
+  // Get contracts assigned to the logged-in cleaner
+  app.get("/api/cleaner/contracts", (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: "Unauthorised" });
+    if (req.session.userRole !== "cleaner" && req.session.userRole !== "admin") {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const contracts = storage.getContractsByCleanerId(req.session.userId);
+    res.json(contracts);
   });
 
   // ─── GDPR Export ──────────────────────────────────────────────────────────

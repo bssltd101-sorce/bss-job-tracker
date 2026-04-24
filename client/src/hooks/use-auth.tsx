@@ -5,23 +5,28 @@ interface AuthUser {
   id: number;
   email: string;
   name: string;
-  role: "admin" | "client";
+  role: "admin" | "client" | "cleaner";
   company?: string;
   phone?: string;
+  hasCompletedSetup?: number;
 }
 
 interface AuthContext {
   user: AuthUser | null;
   loading: boolean;
+  needsSetup: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  completeSetup: (newPassword: string) => Promise<void>;
 }
 
 const Ctx = createContext<AuthContext>({
   user: null,
   loading: true,
+  needsSetup: false,
   login: async () => {},
   logout: async () => {},
+  completeSetup: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -47,7 +52,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
-  return <Ctx.Provider value={{ user, loading, login, logout }}>{children}</Ctx.Provider>;
+  async function completeSetup(newPassword: string) {
+    const res = await apiRequest("POST", "/api/auth/complete-setup", {
+      newPassword,
+      agreedToTerms: true,
+      agreedToGdpr: true,
+    });
+    const data = await res.json();
+    setUser(data.user);
+  }
+
+  const needsSetup = !!user && (user.role === "client" || user.role === "cleaner") && !user.hasCompletedSetup;
+
+  return (
+    <Ctx.Provider value={{ user, loading, needsSetup, login, logout, completeSetup }}>
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useAuth() {

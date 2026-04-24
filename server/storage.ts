@@ -4,6 +4,7 @@ import { eq, desc, and } from "drizzle-orm";
 import {
   users, jobs, jobUpdates, files, notifications,
   properties, cleaningContracts, cleaningLogs, cleaningFiles, messages,
+  cleanerAssignments,
   type User, type InsertUser,
   type Job, type InsertJob,
   type JobUpdate, type InsertJobUpdate,
@@ -14,6 +15,7 @@ import {
   type CleaningLog, type InsertCleaningLog,
   type CleaningFile, type InsertCleaningFile,
   type Message, type InsertMessage,
+  type CleanerAssignment, type InsertCleanerAssignment,
 } from "@shared/schema";
 
 const sqlite = new Database("data.db");
@@ -142,6 +144,22 @@ sqlite.exec(`
   );
 `);
 
+// Add has_completed_setup column if it doesn't exist (migration)
+try {
+  sqlite.exec(`ALTER TABLE users ADD COLUMN has_completed_setup INTEGER NOT NULL DEFAULT 0`);
+} catch (e) {
+  // Column already exists, ignore
+}
+
+try {
+  sqlite.exec(`CREATE TABLE IF NOT EXISTS cleaner_assignments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cleaner_id INTEGER NOT NULL,
+    contract_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT ''
+  )`);
+} catch (e) {}
+
 function now() {
   return new Date().toISOString();
 }
@@ -157,7 +175,7 @@ function seedIfEmpty() {
     name: "BSS Admin",
     role: "admin",
     company: "BSS Ltd",
-    phone: "020 7946 0000",
+    phone: "020 3916 5777",
     createdAt: now(),
   }).run();
 
@@ -391,6 +409,25 @@ function seedIfEmpty() {
       createdAt: now(),
     },
   ]).run();
+
+  // Demo cleaner
+  const cleaner1 = db.insert(users).values({
+    email: "maria.santos@bssltd.info",
+    password: "cleaner123",
+    name: "Maria Santos",
+    role: "cleaner",
+    company: "BSS Ltd",
+    phone: "07700 900003",
+    hasCompletedSetup: 0,
+    createdAt: now(),
+  }).returning().get();
+
+  // Assign Maria to contract 1
+  db.insert(cleanerAssignments).values({
+    cleanerId: cleaner1.id,
+    contractId: contract1.id,
+    createdAt: now(),
+  }).run();
 }
 
 seedIfEmpty();
@@ -458,6 +495,14 @@ export interface IStorage {
   // Messages
   getMessages(threadType: string, threadId: number, includeInternal: boolean): Message[];
   createMessage(data: InsertMessage): Message;
+
+  // Cleaners
+  getAllCleaners(): User[];
+  getCleanerAssignments(cleanerId: number): CleanerAssignment[];
+  getContractsByCleanerId(cleanerId: number): any[];
+  createCleanerAssignment(data: InsertCleanerAssignment): CleanerAssignment;
+  deleteCleanerAssignment(id: number): void;
+  getAssignmentsForContract(contractId: number): CleanerAssignment[];
 }
 
 export const storage: IStorage = {
@@ -612,5 +657,37 @@ export const storage: IStorage = {
   },
   createMessage(data) {
     return db.insert(messages).values({ ...data, createdAt: now() }).returning().get();
+  },
+
+  // Cleaners
+  getAllCleaners() {
+    return db.select().from(users).where(eq(users.role, "cleaner")).all();
+  },
+  getCleanerAssignments(cleanerId) {
+    return db.select().from(cleanerAssignments).where(eq(cleanerAssignments.cleanerId, cleanerId)).all();
+  },
+  getContractsByCleanerId(cleanerId) {
+    const assignments = db.select().from(cleanerAssignments).where(eq(cleanerAssignments.cleanerId, cleanerId)).all();
+    const result: any[] = [];
+    for (const a of assignments) {
+      const contract = db.select().from(cleaningContracts).where(eq(cleaningContracts.id, a.contractId)).get();
+      if (!contract) continue;
+      const property = db.select().from(properties).where(eq(properties.id, contract.propertyId)).get();
+      result.push({
+        ...contract,
+        propertyName: property?.name ?? "",
+        propertyAddress: property?.address ?? "",
+      });
+    }
+    return result;
+  },
+  createCleanerAssignment(data) {
+    return db.insert(cleanerAssignments).values({ ...data, createdAt: now() }).returning().get();
+  },
+  deleteCleanerAssignment(id) {
+    db.delete(cleanerAssignments).where(eq(cleanerAssignments.id, id)).run();
+  },
+  getAssignmentsForContract(contractId) {
+    return db.select().from(cleanerAssignments).where(eq(cleanerAssignments.contractId, contractId)).all();
   },
 };

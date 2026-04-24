@@ -40,11 +40,11 @@ export default function LoginPage() {
           Bright Star Solutions
         </span>
         <a
-          href="tel:02012345678"
+          href="tel:02039165777"
           className="flex items-center gap-1.5 text-white/60 hover:text-[#E8A020] text-sm transition-colors"
         >
           <Phone className="w-3.5 h-3.5" />
-          <span>020 1234 5678</span>
+          <span>020 3916 5777</span>
         </a>
       </header>
 
@@ -139,14 +139,14 @@ export default function LoginPage() {
               </p>
               <div className="flex gap-2">
                 <a
-                  href="tel:02012345678"
+                  href="tel:02039165777"
                   className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 >
                   <Phone className="w-3 h-3" />
-                  020 1234 5678
+                  020 3916 5777
                 </a>
                 <a
-                  href="mailto:info@brightstarsolutions.co.uk"
+                  href="mailto:support@bssltd.info"
                   className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 >
                   <Mail className="w-3 h-3" />
@@ -156,12 +156,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Demo credentials */}
-          <div className="rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
-            <div className="font-semibold text-foreground mb-1">Demo logins</div>
-            <div><span className="font-medium">Admin:</span> admin@bssltd.co.uk / admin123</div>
-            <div><span className="font-medium">Client:</span> john.smith@example.com / client123</div>
-          </div>
         </div>
       </div>
 
