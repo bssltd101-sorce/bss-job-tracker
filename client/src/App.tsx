@@ -24,11 +24,12 @@ import CleaningPage from "@/pages/cleaning";
 import CleaningDetailPage from "@/pages/cleaning-detail";
 import NewCleaningContractPage from "@/pages/new-cleaning-contract";
 import NewCleaningLogPage from "@/pages/new-cleaning-log";
-import { Bell, Sun, Moon } from "lucide-react";
+import { Bell, Sun, Moon, LayoutDashboard, Briefcase, Sparkles, Users, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import bssLogo from "@assets/bss-logo.jpeg";
 
 function ThemeToggle() {
@@ -71,6 +72,52 @@ function NotifBell() {
         ) : null}
       </Button>
     </Link>
+  );
+}
+
+const adminBottomNav = [
+  { href: "/",             label: "Dashboard",  icon: LayoutDashboard },
+  { href: "/jobs",         label: "Jobs",        icon: Briefcase       },
+  { href: "/cleaning",     label: "Cleaning",    icon: Sparkles        },
+  { href: "/clients",      label: "Clients",     icon: Users           },
+  { href: "/cleaners",     label: "Cleaners",    icon: UserCheck       },
+];
+
+const clientBottomNav = [
+  { href: "/",              label: "My Jobs",      icon: LayoutDashboard },
+  { href: "/cleaning",      label: "Cleaning",     icon: Sparkles        },
+  { href: "/notifications", label: "Notifications", icon: Bell            },
+];
+
+function BottomNav() {
+  const { user } = useAuth();
+  const [location, navigate] = useLocation();
+  const isAdmin = user?.role === "admin";
+  const tabs = isAdmin ? adminBottomNav : clientBottomNav;
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0A0A0A] border-t border-[#E8A020]/30">
+      <div className="flex items-stretch">
+        {tabs.map((tab) => {
+          const isActive =
+            tab.href === "/"
+              ? location === "/"
+              : location.startsWith(tab.href);
+          return (
+            <button
+              key={tab.href}
+              onClick={() => navigate(tab.href)}
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 px-1 text-[10px] font-medium transition-colors ${
+                isActive ? "text-[#E8A020]" : "text-white/40"
+              }`}
+            >
+              <tab.icon className="w-5 h-5" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
 
@@ -170,8 +217,8 @@ function AppShell() {
           </header>
 
           {/* ── Page content ── */}
-          <main className="flex-1 overflow-hidden">
-            <Router hook={useHashLocation}>
+          <Router hook={useHashLocation}>
+            <main className="flex-1 overflow-hidden pb-16 md:pb-0">
               <Switch>
                 <Route path="/"                        component={DashboardPage}            />
                 <Route path="/jobs/new"                component={NewJobPage}               />
@@ -186,8 +233,9 @@ function AppShell() {
                 <Route path="/notifications"           component={NotificationsPage}        />
                 <Route                                 component={NotFoundPage}             />
               </Switch>
-            </Router>
-          </main>
+            </main>
+            <BottomNav />
+          </Router>
         </div>
       </div>
     </SidebarProvider>
