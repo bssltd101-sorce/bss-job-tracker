@@ -1,56 +1,54 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 
-const API_BASE = "__PORT_5000__".startsWith("__") ? "" : "__PORT_5000__";
+// Use __PORT_5000__ placeholder so deploy_website can rewrite it for the proxy
+const BASE =
+  typeof window !== "undefined" && (window as any).__PORT_5000__
+    ? (window as any).__PORT_5000__
+    : "";
 
-async function throwIfResNotOk(res: Response) {
+export const API_BASE = BASE;
+
+async function throwIfNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(text || `HTTP ${res.status}`);
   }
 }
 
 export async function apiRequest(
   method: string,
   url: string,
-  data?: unknown | undefined,
+  body?: unknown,
+  opts?: RequestInit
 ): Promise<Response> {
-  const res = await fetch(`${API_BASE}${url}`, {
+  const fullUrl = `${API_BASE}${url}`;
+  const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers: body && !(body instanceof FormData) ? { "Content-Type": "application/json" } : {},
+    body: body
+      ? body instanceof FormData
+        ? body
+        : JSON.stringify(body)
+      : undefined,
+    credentials: "include",
+    ...opts,
   });
-
-  await throwIfResNotOk(res);
+  await throwIfNotOk(res);
   return res;
 }
-
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(`${API_BASE}${queryKey.join("/")}`);
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
-
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      queryFn: async ({ queryKey }) => {
+        const [url] = queryKey as string[];
+        const res = await fetch(`${API_BASE}${url}`, { credentials: "include" });
+        if (res.status === 401) throw new Error("UNAUTHORISED");
+        await throwIfNotOk(res);
+        return res.json();
+      },
       retry: false,
-    },
-    mutations: {
-      retry: false,
+      staleTime: 30_000,
     },
   },
 });

@@ -83,9 +83,14 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
+        sans: ["DM Sans", "system-ui", "sans-serif"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
+      },
+      /* Brand literal values for use where CSS vars aren't available */
+      brandColors: {
+        gold:  "#E8A020",
+        black: "#0A0A0A",
       },
       keyframes: {
         "accordion-down": {
