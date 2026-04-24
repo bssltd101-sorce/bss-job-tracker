@@ -358,11 +358,12 @@ export function registerRoutes(httpServer: Server, app: Express) {
   });
 
   app.post("/api/cleaning/contracts", requireAdmin, (req, res) => {
-    const { propertyId, clientId, frequency, dayOfWeek, operativeName, areas, notes } = req.body;
+    const { propertyId, clientId, contractRef, frequency, dayOfWeek, operativeName, areas, notes } = req.body;
     if (!propertyId || !clientId) return res.status(400).json({ error: "propertyId and clientId required" });
     const contract = storage.createCleaningContract({
       propertyId: Number(propertyId),
       clientId: Number(clientId),
+      contractRef: contractRef || "",
       frequency: frequency || "Weekly",
       dayOfWeek: dayOfWeek || null,
       operativeName: operativeName || null,

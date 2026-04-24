@@ -96,6 +96,7 @@ export const properties = sqliteTable("properties", {
   name: text("name").notNull(), // e.g. "Maple Court"
   address: text("address").notNull(),
   propertyType: text("property_type").notNull().default("Residential Block"), // Residential Block | Commercial | House | Flat
+  propertyCode: text("property_code").notNull().unique().default(""),
   createdAt: text("created_at").notNull().default(""),
 });
 export const insertPropertySchema = createInsertSchema(properties).omit({ id: true, createdAt: true });
@@ -107,6 +108,7 @@ export const cleaningContracts = sqliteTable("cleaning_contracts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   propertyId: integer("property_id").notNull(),
   clientId: integer("client_id").notNull(),
+  contractRef: text("contract_ref").default(""),
   frequency: text("frequency").notNull().default("Weekly"), // Weekly | Fortnightly | Monthly
   dayOfWeek: text("day_of_week"), // e.g. "Thursday"
   operativeName: text("operative_name"),

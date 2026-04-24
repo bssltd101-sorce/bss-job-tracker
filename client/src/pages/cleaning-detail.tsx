@@ -38,6 +38,14 @@ type CleaningLog = {
   createdAt: string;
 };
 
+type CleaningContract = {
+  id: number;
+  contractRef?: string;
+  frequency: string;
+  dayOfWeek?: string;
+  operativeName?: string;
+};
+
 type CleaningFile = {
   id: number;
   logId: number;
@@ -83,6 +91,10 @@ export default function CleaningDetailPage() {
 
   const { data: log, isLoading } = useQuery<CleaningLog>({ queryKey: [`/api/cleaning/logs/${id}`] });
   const { data: files } = useQuery<CleaningFile[]>({ queryKey: [`/api/cleaning/logs/${id}/files`] });
+  const { data: contract } = useQuery<CleaningContract>({
+    queryKey: [`/api/cleaning/contracts/${log?.contractId}`],
+    enabled: !!log?.contractId,
+  });
 
   const updateLog = useMutation({
     mutationFn: (data: Record<string, unknown>) =>
@@ -171,6 +183,11 @@ export default function CleaningDetailPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               {cleaningStatusBadge(log.status)}
+              {contract?.contractRef && (
+                <span className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
+                  {contract.contractRef}
+                </span>
+              )}
             </div>
             <h1 className="text-lg font-bold leading-snug">
               {log.propertyName || log.propertyAddress}

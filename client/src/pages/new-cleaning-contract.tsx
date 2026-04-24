@@ -25,6 +25,7 @@ export default function NewCleaningContractPage() {
 
   const [propertyId, setPropertyId] = useState("");
   const [clientId, setClientId] = useState("");
+  const [contractRef, setContractRef] = useState("");
   const [frequency, setFrequency] = useState("Weekly");
   const [dayOfWeek, setDayOfWeek] = useState("Thursday");
   const [operativeName, setOperativeName] = useState("");
@@ -66,6 +67,7 @@ export default function NewCleaningContractPage() {
     create.mutate({
       propertyId: Number(propertyId),
       clientId: Number(clientId),
+      contractRef: contractRef.trim() || "",
       frequency,
       dayOfWeek,
       operativeName: operativeName || null,
@@ -94,6 +96,18 @@ export default function NewCleaningContractPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Contract Reference / Work Order No.</Label>
+                <Input
+                  value={contractRef}
+                  onChange={(e) => setContractRef(e.target.value)}
+                  placeholder="e.g. CLN-2026-001"
+                  className="text-sm font-mono"
+                  data-testid="input-contract-ref"
+                />
+                <p className="text-[11px] text-muted-foreground">Optional — enter your internal reference or work order number</p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Property *</Label>

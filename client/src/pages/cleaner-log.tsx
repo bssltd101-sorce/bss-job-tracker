@@ -46,6 +46,7 @@ const ISSUE_TYPES = [
 interface ContractDetail {
   id: number;
   propertyId: number;
+  contractRef: string | null;
   frequency: string;
   dayOfWeek: string | null;
   operativeName: string | null;
@@ -256,11 +257,16 @@ export default function CleanerLogPage() {
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-xs text-muted-foreground">Logging clean for</p>
           <p className="text-sm font-semibold text-foreground leading-tight">
             {contract?.propertyName ?? "Loading…"}
           </p>
+          {contract?.contractRef && (
+            <p className="text-[11px] font-mono text-[#E8A020] mt-0.5">
+              Ref: {contract.contractRef}
+            </p>
+          )}
         </div>
       </div>
 

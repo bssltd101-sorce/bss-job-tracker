@@ -7,6 +7,7 @@ interface AssignedContract {
   id: number;
   propertyId: number;
   clientId: number;
+  contractRef: string | null;
   frequency: string;
   dayOfWeek: string | null;
   operativeName: string | null;
@@ -78,9 +79,16 @@ export default function CleanerDashboardPage() {
             >
               {/* Card top — property info */}
               <div className="p-5">
-                <h2 className="text-lg font-bold text-foreground leading-snug">
-                  {contract.propertyName}
-                </h2>
+                <div className="flex items-start justify-between gap-2 mb-0.5">
+                  <h2 className="text-lg font-bold text-foreground leading-snug">
+                    {contract.propertyName}
+                  </h2>
+                  {contract.contractRef && (
+                    <span className="flex-shrink-0 text-[11px] font-mono font-semibold text-[#E8A020] bg-[#E8A020]/10 border border-[#E8A020]/20 px-2 py-0.5 rounded-full">
+                      {contract.contractRef}
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-start gap-1.5 mt-1.5">
                   <MapPin className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-muted-foreground leading-snug">

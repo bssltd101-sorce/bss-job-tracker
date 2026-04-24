@@ -160,8 +160,25 @@ try {
   )`);
 } catch (e) {}
 
+try {
+  sqlite.exec(`ALTER TABLE properties ADD COLUMN property_code TEXT NOT NULL DEFAULT ''`);
+} catch (e) {}
+
+try {
+  sqlite.exec(`ALTER TABLE cleaning_contracts ADD COLUMN contract_ref TEXT NOT NULL DEFAULT ''`);
+} catch (e) {}
+
 function now() {
   return new Date().toISOString();
+}
+
+function generatePropertyCode(): string {
+  const existing = db.select({ code: properties.propertyCode }).from(properties).all();
+  const nums = existing
+    .map(r => parseInt(r.code.replace('BSS-PROP-', ''), 10))
+    .filter(n => !isNaN(n));
+  const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
+  return `BSS-PROP-${String(next).padStart(4, '0')}`;
 }
 
 function seedIfEmpty() {
@@ -304,6 +321,7 @@ function seedIfEmpty() {
     name: "Maple Court",
     address: "40-50 Maple Street, Islington, London N1 2AB",
     propertyType: "Residential Block",
+    propertyCode: "BSS-PROP-0001",
     createdAt: now(),
   }).returning().get();
 
@@ -312,6 +330,7 @@ function seedIfEmpty() {
     name: "Oak View",
     address: "15-20 Oak Avenue, Hackney, London E8 3PQ",
     propertyType: "Residential Block",
+    propertyCode: "BSS-PROP-0002",
     createdAt: now(),
   }).returning().get();
 
@@ -471,6 +490,7 @@ export interface IStorage {
   getAllProperties(): Property[];
   getPropertyById(id: number): Property | undefined;
   createProperty(data: InsertProperty): Property;
+  getPropertyByCode(code: string): Property | undefined;
 
   // Cleaning Contracts
   getCleaningContractsByPropertyId(propertyId: number): CleaningContract[];
@@ -595,7 +615,11 @@ export const storage: IStorage = {
     return db.select().from(properties).where(eq(properties.id, id)).get();
   },
   createProperty(data) {
-    return db.insert(properties).values({ ...data, createdAt: now() }).returning().get();
+    const code = generatePropertyCode();
+    return db.insert(properties).values({ ...data, propertyCode: code, createdAt: now() }).returning().get();
+  },
+  getPropertyByCode(code) {
+    return db.select().from(properties).where(eq(properties.propertyCode, code.toUpperCase().trim())).get();
   },
 
   // Cleaning Contracts
