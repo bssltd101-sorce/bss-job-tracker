@@ -15,18 +15,18 @@ import { cn } from "@/lib/utils";
 import bssLogo from "@assets/bss-logo.jpeg";
 
 const adminNav = [
-  { href: "/",             label: "Dashboard",     icon: LayoutDashboard },
-  { href: "/jobs",         label: "All Jobs",       icon: Briefcase       },
-  { href: "/cleaning",     label: "Cleaning",       icon: Sparkles        },
-  { href: "/clients",      label: "Clients",        icon: Users           },
-  { href: "/cleaners",     label: "Cleaners",       icon: UserCheck       },
-  { href: "/notifications",label: "Notifications",  icon: Bell            },
+  { href: "~/",             label: "Dashboard",     icon: LayoutDashboard },
+  { href: "~/jobs",         label: "All Jobs",       icon: Briefcase       },
+  { href: "~/cleaning",     label: "Cleaning",       icon: Sparkles        },
+  { href: "~/clients",      label: "Clients",        icon: Users           },
+  { href: "~/cleaners",     label: "Cleaners",       icon: UserCheck       },
+  { href: "~/notifications",label: "Notifications",  icon: Bell            },
 ];
 
 const clientNav = [
-  { href: "/",             label: "My Jobs",        icon: LayoutDashboard },
-  { href: "/cleaning",     label: "Cleaning",       icon: Sparkles        },
-  { href: "/notifications",label: "Notifications",  icon: Bell            },
+  { href: "~/",             label: "My Jobs",        icon: LayoutDashboard },
+  { href: "~/cleaning",     label: "Cleaning",       icon: Sparkles        },
+  { href: "~/notifications",label: "Notifications",  icon: Bell            },
 ];
 
 export function AppSidebar() {
