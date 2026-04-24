@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Phone, Mail } from "lucide-react";
+import { Eye, EyeOff, Mail } from "lucide-react";
 import bssLogo from "@assets/bss-logo.jpeg";
 
 export default function LoginPage() {
@@ -40,11 +40,11 @@ export default function LoginPage() {
           Bright Star Solutions
         </span>
         <a
-          href="tel:02039165777"
+          href="mailto:support@bssltd.info"
           className="flex items-center gap-1.5 text-white/60 hover:text-[#E8A020] text-sm transition-colors"
         >
-          <Phone className="w-3.5 h-3.5" />
-          <span>020 3916 5777</span>
+          <Mail className="w-3.5 h-3.5" />
+          <span>support@bssltd.info</span>
         </a>
       </header>
 
@@ -137,22 +137,19 @@ export default function LoginPage() {
               <p className="text-xs text-muted-foreground text-center">
                 Need help accessing your account?
               </p>
-              <div className="flex gap-2">
-                <a
-                  href="tel:02039165777"
-                  className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  <Phone className="w-3 h-3" />
-                  020 3916 5777
+              <a
+                href="mailto:support@bssltd.info"
+                className="flex w-full items-center justify-center gap-1.5 h-8 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <Mail className="w-3 h-3" />
+                Email us at support@bssltd.info
+              </a>
+              <p className="text-xs text-muted-foreground text-center">
+                Don't have an account?{" "}
+                <a href="mailto:support@bssltd.info" className="text-primary hover:underline font-medium">
+                  Contact us to get set up
                 </a>
-                <a
-                  href="mailto:support@bssltd.info"
-                  className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  <Mail className="w-3 h-3" />
-                  Email us
-                </a>
-              </div>
+              </p>
             </div>
           </div>
 
