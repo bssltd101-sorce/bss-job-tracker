@@ -229,7 +229,7 @@ export default function CleanerLogPage() {
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("~/")}
           >
             ← Back to Sites
           </Button>
@@ -251,7 +251,7 @@ export default function CleanerLogPage() {
       {/* Sub-header */}
       <div className="bg-muted/40 border-b border-border px-4 py-3 flex items-center gap-3">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("~/")}
           className="text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Back"
         >

@@ -74,7 +74,7 @@ export default function NewJobPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
-        <Link href="/jobs">
+        <Link href="~/jobs">
           <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground">
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>

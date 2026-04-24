@@ -153,7 +153,7 @@ export default function CleaningDetailPage() {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <p className="font-medium">Cleaning log not found</p>
-          <Link href="/cleaning">
+          <Link href="~/cleaning">
             <Button variant="outline" className="mt-3">Back to Cleaning</Button>
           </Link>
         </div>
@@ -172,7 +172,7 @@ export default function CleaningDetailPage() {
       <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
 
         {/* Back */}
-        <Link href="/cleaning">
+        <Link href="~/cleaning">
           <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground">
             <ArrowLeft className="w-4 h-4" /> Back to Cleaning
           </Button>

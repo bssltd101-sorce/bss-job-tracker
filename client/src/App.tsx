@@ -59,7 +59,7 @@ function NotifBell() {
     refetchInterval: 30_000,
   });
   return (
-    <Link href="/notifications">
+    <Link href="~/notifications">
       <Button
         variant="ghost"
         size="icon"

@@ -72,7 +72,7 @@ export default function NewCleaningLogPage() {
         await apiRequest("POST", `/api/cleaning/logs/${newLog.id}/files`, fd);
       }
       toast({ title: "Cleaning log created" });
-      navigate("/cleaning");
+      navigate("~/cleaning");
     },
     onError: (e) => toast({ variant: "destructive", title: "Failed to create log", description: String(e) }),
   });
@@ -106,7 +106,7 @@ export default function NewCleaningLogPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5">
-        <Link href="/cleaning">
+        <Link href="~/cleaning">
           <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground">
             <ArrowLeft className="w-4 h-4" /> Back to Cleaning
           </Button>

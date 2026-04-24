@@ -136,7 +136,7 @@ export default function DashboardPage() {
             </p>
           </div>
           {isAdmin && (
-            <Link href="/jobs/new">
+            <Link href="~/jobs/new">
               <Button size="sm" className="gap-1.5" data-testid="button-new-job">
                 <Plus className="w-4 h-4" /> New Job
               </Button>
@@ -217,7 +217,7 @@ export default function DashboardPage() {
                   {isAdmin ? "Create your first job to get started." : "Your jobs will appear here once created by the BSS team."}
                 </p>
                 {isAdmin && (
-                  <Link href="/jobs/new">
+                  <Link href="~/jobs/new">
                     <Button className="mt-4 gap-1.5" data-testid="button-create-first-job">
                       <Plus className="w-4 h-4" /> Create Job
                     </Button>

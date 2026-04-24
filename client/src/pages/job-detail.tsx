@@ -163,7 +163,7 @@ export default function JobDetailPage() {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <p className="font-medium">Job not found</p>
-          <Link href="/"><Button variant="outline" className="mt-3">Back to dashboard</Button></Link>
+          <Link href="~/"><Button variant="outline" className="mt-3">Back to dashboard</Button></Link>
         </div>
       </div>
     );
@@ -176,7 +176,7 @@ export default function JobDetailPage() {
     <div className="h-full overflow-y-auto">
       <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
         {/* Back */}
-        <Link href="/">
+        <Link href="~/">
           <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground">
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>

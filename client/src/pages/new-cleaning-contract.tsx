@@ -40,7 +40,7 @@ export default function NewCleaningContractPage() {
       apiRequest("POST", "/api/cleaning/contracts", data).then((r) => r.json()),
     onSuccess: () => {
       toast({ title: "Contract created" });
-      navigate("/cleaning");
+      navigate("~/cleaning");
     },
     onError: (e) => toast({ variant: "destructive", title: "Failed to create contract", description: String(e) }),
   });
@@ -79,7 +79,7 @@ export default function NewCleaningContractPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5">
-        <Link href="/cleaning">
+        <Link href="~/cleaning">
           <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground">
             <ArrowLeft className="w-4 h-4" /> Back to Cleaning
           </Button>

@@ -45,7 +45,7 @@ export default function JobsListPage() {
             <h1 className="text-xl font-bold">All Jobs</h1>
             <p className="text-sm text-muted-foreground mt-0.5">{jobs?.length ?? 0} jobs total</p>
           </div>
-          <Link href="/jobs/new">
+          <Link href="~/jobs/new">
             <Button size="sm" className="gap-1.5" data-testid="button-new-job-list">
               <Plus className="w-4 h-4" /> New Job
             </Button>

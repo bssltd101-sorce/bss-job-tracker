@@ -93,12 +93,12 @@ export default function CleaningPage() {
           </div>
           {isAdmin && (
             <div className="flex items-center gap-2">
-              <Link href="/cleaning/new-contract">
+              <Link href="~/cleaning/new-contract">
                 <Button size="sm" variant="outline" className="gap-1.5">
                   <Plus className="w-4 h-4" /> New Contract
                 </Button>
               </Link>
-              <Link href="/cleaning/new-log">
+              <Link href="~/cleaning/new-log">
                 <Button size="sm" className="gap-1.5">
                   <Clipboard className="w-4 h-4" /> Log Clean
                 </Button>
